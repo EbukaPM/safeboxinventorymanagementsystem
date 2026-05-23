@@ -245,4 +245,59 @@ router.get('/dashboard', auth, (req, res) => {
   res.json({ totalValue, below, low, activeProjects, pendingApprovals, openOemReturns, totalEngineers, totalProducts: stock.length, catSummary });
 });
 
+// DELETE routes — Super Admin only
+router.delete('/movements/:id', auth, superAdmin, (req, res) => {
+  const m = db.prepare('SELECT * FROM stock_movements WHERE id=?').get(req.params.id);
+  if (!m) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM stock_movements WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Movement deleted', 'movement', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/returns/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM returns WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM returns WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Return deleted', 'return', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/projects/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM projects WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM project_materials WHERE project_id=?').run(req.params.id);
+  db.prepare('DELETE FROM project_engineers WHERE project_id=?').run(req.params.id);
+  db.prepare('DELETE FROM projects WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Project deleted', 'project', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/materials/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM project_materials WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM project_materials WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Material deleted', 'material', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/engineers/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM project_engineers WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM project_engineers WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Engineer deleted', 'engineer', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/users/:id', auth, superAdmin, (req, res) => {
+  const u = db.prepare('SELECT * FROM users WHERE id=?').get(req.params.id);
+  if (!u) return res.status(404).json({ error: 'Not found' });
+  if (u.id === req.user.id) return res.status(400).json({ error: 'Cannot delete your own account' });
+  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'User deleted', 'user', req.params.id, `Deleted user ${u.name}`, req.ip);
+  res.json({ success: true });
+});
+
+router.delete('/products/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM products WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM products WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Product deleted', 'product', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
 module.exports = router;

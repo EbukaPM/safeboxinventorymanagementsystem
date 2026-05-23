@@ -5,3 +5,4 @@ server/db/safebox.db
 .env
 *.log
 .DS_Store
+.claude/

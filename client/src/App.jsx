@@ -5,7 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import {
   Inventory, Movements, Returns, Projects, Materials, Engineers,
-  Approvals, Categories, Users, Audit, Settings
+  Approvals, Categories, Users, Audit, Settings, ChangePassword
 } from './pages/Pages';
 
 function PrivateRoute({ children, requireSA=false }) {
@@ -41,6 +41,7 @@ function App() {
           <Route path="/users" element={<PrivateRoute requireSA><Users /></PrivateRoute>} />
           <Route path="/audit" element={<PrivateRoute requireSA><Audit /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
+          <Route path="/change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
