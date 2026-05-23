@@ -41,11 +41,11 @@ export function CardHeader({ title, icon, action }) {
 
 export function Btn({ children, onClick, variant='default', size='md', disabled=false, style={} }) {
   const vars = {
-    default:{ bg:'var(--color-background-primary)',color:'var(--color-text-primary)',border:'0.5px solid var(--color-border-secondary)' },
+    default:{ bg:'#fff',color:'#0F3D26',border:'1px solid #0F3D26' },
     primary:{ bg:'#0F3D26',color:'#fff',border:'none' },
     danger:{ bg:'#A32D2D',color:'#fff',border:'none' },
     warning:{ bg:'#BA7517',color:'#fff',border:'none' },
-    ghost:{ bg:'transparent',color:'var(--color-text-secondary)',border:'none',padding:'4px 6px' },
+    ghost:{ bg:'transparent',color:'#0F3D26',border:'none',padding:'4px 6px' },
   };
   const sz = size==='sm'?{ padding:'4px 10px',fontSize:11 }:{ padding:'7px 13px',fontSize:12 };
   const v = vars[variant]||vars.default;

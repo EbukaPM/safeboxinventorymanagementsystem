@@ -34,7 +34,7 @@ export default function Login() {
       {/* Left Panel */}
       <div style={{
         width: '40%',
-        background: 'linear-gradient(160deg, #0F3D26 0%, #1B5E3B 100%)',
+        background: 'linear-gradient(160deg, #0F3D26 0%, #0F3D26 100%)',
         display: 'flex',
         flexDirection: 'column',
         padding: '48px 40px',
@@ -169,7 +169,7 @@ export default function Login() {
                     outline: 'none',
                     transition: 'border-color .15s',
                   }}
-                  onFocus={e => e.target.style.borderColor = '#1B5E3B'}
+                  onFocus={e => e.target.style.borderColor = '#0F3D26'}
                   onBlur={e => e.target.style.borderColor = 'var(--color-border-secondary)'}
                 />
               </div>
@@ -211,7 +211,7 @@ export default function Login() {
                     outline: 'none',
                     transition: 'border-color .15s',
                   }}
-                  onFocus={e => e.target.style.borderColor = '#1B5E3B'}
+                  onFocus={e => e.target.style.borderColor = '#0F3D26'}
                   onBlur={e => e.target.style.borderColor = 'var(--color-border-secondary)'}
                 />
                 <button
@@ -225,7 +225,7 @@ export default function Login() {
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    color: 'var(--color-text-tertiary)',
+                    color: '#0F3D26',
                     padding: 4,
                     display: 'flex',
                     alignItems: 'center',
@@ -263,7 +263,7 @@ export default function Login() {
               style={{
                 width: '100%',
                 padding: '12px',
-                background: loading ? '#154D30' : '#1B5E3B',
+                background: loading ? '#154D30' : '#0F3D26',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 'var(--border-radius-md)',
@@ -278,7 +278,7 @@ export default function Login() {
                 transition: 'background .15s',
               }}
               onMouseEnter={e => { if (!loading) e.target.style.background = '#154D30'; }}
-              onMouseLeave={e => { if (!loading) e.target.style.background = '#1B5E3B'; }}
+              onMouseLeave={e => { if (!loading) e.target.style.background = '#0F3D26'; }}
             >
               {loading ? (
                 <>
