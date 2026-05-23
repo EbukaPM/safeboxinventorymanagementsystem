@@ -35,11 +35,12 @@ export default function Dashboard() {
       <div><div style={{ fontSize:16,fontWeight:500 }}>Dashboard</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Good day, {user?.name}</div></div>
     </div>
 
-    <div style={{ display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:10,marginBottom:16 }}>
+    <div style={{ display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:10,marginBottom:16 }}>
       <KpiCard label="Approved products" value={stats.totalProducts} sub={`${stats.pendingApprovals} pending approval`} />
       <KpiCard label="Inventory value" value={fmt(stats.totalValue)} sub="Approved stock only" />
       <KpiCard label="Below threshold" value={stats.below} sub={`${stats.low} running low`} valueColor={stats.below > 0 ? '#A32D2D' : undefined} />
       <KpiCard label="Active projects" value={stats.activeProjects} sub={`${stats.totalEngineers} engineers deployed`} valueColor="#0F6E56" />
+      <KpiCard label="Completed projects" value={stats.completedProjects ?? 0} sub="Total delivered" valueColor="#0F3D26" />
     </div>
 
     {stats.below > 0 && <Alert type="danger"><i className="ti ti-alert-triangle" aria-hidden="true" /><strong>{stats.below} item{stats.below > 1 ? 's' : ''} below threshold</strong> — reorder required</Alert>}

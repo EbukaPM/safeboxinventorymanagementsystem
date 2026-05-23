@@ -256,6 +256,10 @@ export function Projects() {
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
+  const [statusFilter, setStatusFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc');
   const sf = v => setForm(f=>({...f,...v}));
 
   const openAdd = () => { setForm({name:'',client:'',project_type:'Commercial',start_date:today(),end_date:'',status:'Planning',manager:'',system_size_kwp:0,notes:''}); setEditing(null); setModal(true); };
@@ -265,10 +269,40 @@ export function Projects() {
     catch(e){ alert(e.message); }
   };
 
+  const filtered = projects
+    .filter(p => !statusFilter || p.status === statusFilter)
+    .filter(p => !dateFrom || p.start_date >= dateFrom)
+    .filter(p => !dateTo || p.start_date <= dateTo)
+    .sort((a, b) => {
+      if (sortBy === 'date_desc') return (b.start_date||'').localeCompare(a.start_date||'');
+      if (sortBy === 'date_asc') return (a.start_date||'').localeCompare(b.start_date||'');
+      if (sortBy === 'status') return (a.status||'').localeCompare(b.status||'');
+      if (sortBy === 'name') return (a.name||'').localeCompare(b.name||'');
+      return 0;
+    });
+
+  const selStyle = { padding:'5px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' };
+
   return <>
     <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
       <div><div style={{ fontSize:16,fontWeight:500 }}>Projects</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Solar installation projects</div></div>
       <Btn variant="primary" onClick={openAdd}><i className="ti ti-plus" aria-hidden="true"/>New project</Btn>
+    </div>
+    <div style={{ display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center' }}>
+      <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={selStyle}>
+        <option value="">All statuses</option>
+        {['Planning','Active','Completed','On Hold','Cancelled'].map(s=><option key={s}>{s}</option>)}
+      </select>
+      <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} title="Start date from" style={selStyle} />
+      <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} title="Start date to" style={selStyle} />
+      <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={selStyle}>
+        <option value="date_desc">Newest first</option>
+        <option value="date_asc">Oldest first</option>
+        <option value="status">Sort by status</option>
+        <option value="name">Sort by name</option>
+      </select>
+      {(statusFilter||dateFrom||dateTo) && <Btn size="sm" onClick={()=>{setStatusFilter('');setDateFrom('');setDateTo('');}}><i className="ti ti-x" aria-hidden="true"/>Clear</Btn>}
+      <span style={{ fontSize:11,color:'var(--color-text-secondary)',marginLeft:4 }}>{filtered.length} project{filtered.length!==1?'s':''}</span>
     </div>
     <Card>
       <DataTable
@@ -282,7 +316,7 @@ export function Projects() {
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
           {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete project ${r.name}?`)){try{await api.del('/projects/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
-        rows={projects} empty="No projects yet"
+        rows={filtered} empty="No projects match your filters"
       />
     </Card>
     <Modal open={modal} title={editing?'Edit project':'New project'} onClose={()=>setModal(false)} onSave={save}>
@@ -531,16 +565,22 @@ export function Categories() {
 export function Users() {
   const { isSA } = useAuth();
   const [users, loading, reload] = useFetch('/users');
-  const [inviteModal, setInviteModal] = useState(false);
+  const [addModal, setAddModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name:'', email:'', role:'Admin' });
+  const [addForm, setAddForm] = useState({ name:'', email:'', role:'Admin', password:'' });
   const [editForm, setEditForm] = useState({});
   const [editId, setEditId] = useState(null);
+  const [addMsg, setAddMsg] = useState('');
   if (!isSA()) return <div style={{ textAlign:'center',padding:32,color:'var(--color-text-secondary)' }}>Access restricted to Super Admin</div>;
 
-  const sendInvite = async () => {
-    try { const r = await api.post('/auth/invite', inviteForm); alert(`Invitation created for ${inviteForm.email}\n\nShare this activation link:\n/accept-invite?token=${r.inviteToken}`); setInviteModal(false); reload(); }
-    catch(e){ alert(e.message); }
+  const createUser = async () => {
+    setAddMsg('');
+    try {
+      await api.post('/auth/create-user', addForm);
+      setAddMsg('');
+      setAddModal(false);
+      reload();
+    } catch(e){ setAddMsg(e.message); }
   };
   const openEdit = u => { setEditForm({name:u.name,role:u.role,status:u.status}); setEditId(u.id); setEditModal(true); };
   const saveEdit = async () => {
@@ -551,9 +591,9 @@ export function Users() {
   return <>
     <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
       <div><div style={{ fontSize:16,fontWeight:500 }}>User management</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Manage team access — Super Admin only</div></div>
-      <Btn variant="primary" onClick={()=>{setInviteForm({name:'',email:'',role:'Admin'});setInviteModal(true);}}><i className="ti ti-mail" aria-hidden="true"/>Invite user</Btn>
+      <Btn variant="primary" onClick={()=>{setAddForm({name:'',email:'',role:'Admin',password:''});setAddMsg('');setAddModal(true);}}><i className="ti ti-user-plus" aria-hidden="true"/>Add user</Btn>
     </div>
-    <Alert type="success"><i className="ti ti-shield-check" aria-hidden="true"/>Super Admins approve catalogues and movements. Admins log and view data.</Alert>
+    <Alert type="info"><i className="ti ti-shield-check" aria-hidden="true"/>Super Admins approve catalogues and movements. Admins log and view data. Users can change their password after logging in.</Alert>
     <Card>
       <DataTable
         cols={[
@@ -567,11 +607,15 @@ export function Users() {
         rows={users} empty="No users"
       />
     </Card>
-    <Modal open={inviteModal} title="Invite user" onClose={()=>setInviteModal(false)} onSave={sendInvite} saveLabel="Send invitation">
-      <Alert type="success" style={{marginBottom:12}}><i className="ti ti-mail" aria-hidden="true"/>An invitation link will be generated for the user to activate their account</Alert>
-      <FormRow label="Full name"><Input value={inviteForm.name} onChange={v=>setInviteForm(f=>({...f,name:v}))} placeholder="e.g. Amaka Obi"/></FormRow>
-      <FormRow label="Email address"><Input type="email" value={inviteForm.email} onChange={v=>setInviteForm(f=>({...f,email:v}))} placeholder="user@safebox.ng"/></FormRow>
-      <FormRow label="Role"><Select value={inviteForm.role} onChange={v=>setInviteForm(f=>({...f,role:v}))}><option>Admin</option><option>Super Admin</option></Select></FormRow>
+    <Modal open={addModal} title="Add new user" onClose={()=>setAddModal(false)} onSave={createUser} saveLabel="Create user">
+      <Alert type="info" style={{marginBottom:12}}><i className="ti ti-info-circle" aria-hidden="true"/>Set an initial password — the user can change it after logging in via Settings → Change password</Alert>
+      {addMsg && <Alert type="danger" style={{marginBottom:12}}><i className="ti ti-alert-circle" aria-hidden="true"/>{addMsg}</Alert>}
+      <FormRow label="Full name"><Input value={addForm.name} onChange={v=>setAddForm(f=>({...f,name:v}))} placeholder="e.g. Amaka Obi"/></FormRow>
+      <FormRow label="Email address"><Input type="email" value={addForm.email} onChange={v=>setAddForm(f=>({...f,email:v}))} placeholder="user@safebox.ng"/></FormRow>
+      <Grid2>
+        <FormRow label="Role"><Select value={addForm.role} onChange={v=>setAddForm(f=>({...f,role:v}))}><option>Admin</option><option>Super Admin</option></Select></FormRow>
+        <FormRow label="Initial password"><Input type="password" value={addForm.password} onChange={v=>setAddForm(f=>({...f,password:v}))} placeholder="Min. 6 characters"/></FormRow>
+      </Grid2>
     </Modal>
     <Modal open={editModal} title="Edit user" onClose={()=>setEditModal(false)} onSave={saveEdit}>
       <FormRow label="Full name"><Input value={editForm.name||''} onChange={v=>setEditForm(f=>({...f,name:v}))}/></FormRow>

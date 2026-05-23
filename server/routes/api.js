@@ -229,6 +229,7 @@ router.get('/dashboard', auth, (req, res) => {
   const below = stock.filter(p=>p.current_stock<=p.min_threshold).length;
   const low = stock.filter(p=>p.current_stock>p.min_threshold&&p.current_stock<=p.min_threshold*1.2).length;
   const activeProjects = db.prepare("SELECT COUNT(*) as c FROM projects WHERE status='Active'").get().c;
+  const completedProjects = db.prepare("SELECT COUNT(*) as c FROM projects WHERE status='Completed'").get().c;
   const pendingApprovals = db.prepare("SELECT COUNT(*) as c FROM products WHERE status='Pending'").get().c
     + db.prepare("SELECT COUNT(*) as c FROM stock_movements WHERE status='Pending'").get().c;
   const openOemReturns = db.prepare("SELECT COUNT(*) as c FROM returns WHERE oem!='' AND reconciled=0").get().c;
@@ -242,7 +243,7 @@ router.get('/dashboard', auth, (req, res) => {
     catSummary[p.category].totalValue += p.current_stock * p.unit_cost;
   });
 
-  res.json({ totalValue, below, low, activeProjects, pendingApprovals, openOemReturns, totalEngineers, totalProducts: stock.length, catSummary });
+  res.json({ totalValue, below, low, activeProjects, completedProjects, pendingApprovals, openOemReturns, totalEngineers, totalProducts: stock.length, catSummary });
 });
 
 // DELETE routes — Super Admin only

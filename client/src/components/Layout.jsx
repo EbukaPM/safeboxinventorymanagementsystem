@@ -97,12 +97,15 @@ export default function Layout({ children }) {
       }}>
         {/* Logo area */}
         <div style={{
-          padding: '18px 14px 14px',
+          padding: '14px 12px',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
         }}>
-          <img src="/logo.svg" style={{ height: 32, filter: 'brightness(0) invert(1)' }} alt="SafeBox Energy" />
+          <div style={{ background: '#ffffff', borderRadius: 10, padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src="/logo.png" style={{ height: 36, display: 'block' }} alt="SafeBox Energy" />
+          </div>
         </div>
 
         {/* Nav items */}
