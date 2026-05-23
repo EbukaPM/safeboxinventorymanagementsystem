@@ -65,6 +65,19 @@ router.post('/logout', auth, (req, res) => {
   res.json({ success: true });
 });
 
+router.post('/create-user', auth, superAdmin, (req, res) => {
+  const { name, email, role, password } = req.body;
+  if (!name || !email || !role || !password) return res.status(400).json({ error: 'Name, email, role and password required' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  const existing = db.prepare('SELECT id FROM users WHERE LOWER(email) = LOWER(?)').get(email);
+  if (existing) return res.status(409).json({ error: 'Email already exists' });
+  const id = 'USR-' + String(db.prepare('SELECT COUNT(*) as c FROM users').get().c + 1).padStart(3, '0');
+  const hash = bcrypt.hashSync(password, 10);
+  db.prepare(`INSERT INTO users (id,name,email,password_hash,role,status,invited,created_at) VALUES (?,?,?,?,?,?,0,datetime('now'))`).run(id, name, email, hash, role, 'Active');
+  audit(req.user.id, req.user.name, 'User created', 'user', id, `${name} (${email}) created as ${role}`, req.ip);
+  res.status(201).json({ success: true, id, message: `User ${name} created successfully` });
+});
+
 router.put('/change-password', auth, (req, res) => {
   const { currentPassword, newPassword } = req.body;
   if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password required' });
