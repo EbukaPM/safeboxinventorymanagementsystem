@@ -103,9 +103,7 @@ export default function Layout({ children }) {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <div style={{ background: '#ffffff', borderRadius: 10, padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src="/logo.png" style={{ height: 36, display: 'block' }} alt="SafeBox Energy" />
-          </div>
+          <img src="/logo.png" style={{ height: 36, display: 'block' }} alt="SafeBox Energy" />
         </div>
 
         {/* Nav items */}

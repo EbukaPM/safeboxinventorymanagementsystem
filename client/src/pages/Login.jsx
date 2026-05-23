@@ -43,9 +43,7 @@ export default function Login() {
       }} className="login-left">
         {/* Logo */}
         <div style={{ marginBottom: 48 }}>
-          <div style={{ background: '#ffffff', borderRadius: 12, padding: '8px 16px', display: 'inline-flex', alignItems: 'center' }}>
-            <img src="/logo.png" alt="SafeBox Energy" style={{ height: 44, display: 'block' }} />
-          </div>
+          <img src="/logo.png" alt="SafeBox Energy" style={{ height: 44, display: 'block' }} />
         </div>
 
         {/* Tagline */}
