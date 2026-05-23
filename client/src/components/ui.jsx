@@ -11,7 +11,7 @@ export function Badge({ children, color = 'gray' }) {
     amber: { bg: '#FAEEDA', color: '#854F0B' },
     blue: { bg: '#E6F1FB', color: '#185FA5' },
     purple: { bg: '#EEEDFE', color: '#534AB7' },
-    teal: { bg: '#E1F5EE', color: '#0F6E56' },
+    teal: { bg: '#E8F5EE', color: '#1B5E3B' },
     gray: { bg: 'var(--color-background-secondary)', color: 'var(--color-text-secondary)' },
   };
   const s = map[color] || map.gray;
@@ -42,7 +42,7 @@ export function CardHeader({ title, icon, action }) {
 export function Btn({ children, onClick, variant='default', size='md', disabled=false, style={} }) {
   const vars = {
     default:{ bg:'var(--color-background-primary)',color:'var(--color-text-primary)',border:'0.5px solid var(--color-border-secondary)' },
-    primary:{ bg:'#0F6E56',color:'#fff',border:'none' },
+    primary:{ bg:'#1B5E3B',color:'#fff',border:'none' },
     danger:{ bg:'#A32D2D',color:'#fff',border:'none' },
     warning:{ bg:'#BA7517',color:'#fff',border:'none' },
     ghost:{ bg:'transparent',color:'var(--color-text-secondary)',border:'none',padding:'4px 6px' },
@@ -116,7 +116,7 @@ export function DataTable({ cols, rows, empty='No data' }) {
   </div>;
 }
 
-export function Progress({ value, max, color='#0F6E56' }) {
+export function Progress({ value, max, color='#1B5E3B' }) {
   const pct = Math.min(100, Math.round((value/Math.max(max,1))*100));
   return <div style={{ height:5,background:'var(--color-background-secondary)',borderRadius:3,overflow:'hidden',minWidth:50 }}>
     <div style={{ height:'100%',width:`${pct}%`,background:color,borderRadius:3 }} />

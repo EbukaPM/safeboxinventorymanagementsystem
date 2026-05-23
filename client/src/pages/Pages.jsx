@@ -68,6 +68,7 @@ export function Inventory() {
           {key:'unit_cost',label:'Unit cost',width:110,align:'right',render:r=>fmt(r.unit_cost)},
           {key:'value',label:'Total value',width:120,align:'right',render:r=>fmt((stockMap[r.id]||0)*r.unit_cost)},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete ${r.model}?`)){try{await api.del('/products/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={filtered} empty="No products found"
       />
@@ -135,6 +136,7 @@ export function Movements() {
           {key:'total',label:'Value',width:110,align:'right',render:r=>fmt(r.quantity*r.unit_cost)},
           {key:'status',label:'Approval',width:100,render:r=><StatusBadge status={r.status}/>},
           {key:'source',label:'Source',wrap:true},{key:'recorded_by_name',label:'By',width:80},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete movement ${r.id}?`)){try{await api.del('/movements/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={filtered} empty="No movements recorded"
       />
@@ -169,6 +171,7 @@ export function Movements() {
 
 // ── Returns Page ──────────────────────────────────────────────────────────
 export function Returns() {
+  const { isSA } = useAuth();
   const [returns, loading, reload] = useFetch('/returns');
   const [products] = useFetch('/products');
   const [projects] = useFetch('/projects');
@@ -209,6 +212,7 @@ export function Returns() {
           {key:'days',label:'Days open',width:80,render:r=>{ const d=r.sent_to_oem_date&&!r.reconciled?daysSince(r.sent_to_oem_date):null; return d!==null?<Badge color={d>30?'red':d>14?'amber':'green'}>{d}d</Badge>:'—'; }},
           {key:'oem_response',label:'OEM response',wrap:true,width:130},{key:'reconciled',label:'Status',width:90,render:r=>r.reconciled?<Badge color="green">Reconciled</Badge>:<Badge color="amber">Open</Badge>},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete return ${r.id}?`)){try{await api.del('/returns/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={returns} empty="No returns logged"
       />
@@ -247,6 +251,7 @@ export function Returns() {
 
 // ── Projects Page ──────────────────────────────────────────────────────────
 export function Projects() {
+  const { isSA } = useAuth();
   const [projects, loading, reload] = useFetch('/projects');
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -275,6 +280,7 @@ export function Projects() {
           {key:'manager',label:'Manager',width:110},{key:'engineer_count',label:'Engineers',width:75,align:'center'},
           {key:'materials_cost',label:'Materials cost',width:120,align:'right',render:r=>fmt(r.materials_cost)},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete project ${r.name}?`)){try{await api.del('/projects/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={projects} empty="No projects yet"
       />
@@ -303,6 +309,7 @@ export function Projects() {
 
 // ── Materials Page ─────────────────────────────────────────────────────────
 export function Materials() {
+  const { isSA } = useAuth();
   const [materials, loading, reload] = useFetch('/materials');
   const [products] = useFetch('/products');
   const [projects] = useFetch('/projects');
@@ -341,6 +348,7 @@ export function Materials() {
           {key:'quantity',label:'Qty',width:65,align:'right',render:r=>`${fmtN(r.quantity)} ${r.unit||''}`},
           {key:'unit_cost',label:'Unit cost',width:110,align:'right',render:r=>fmt(r.unit_cost)},
           {key:'total_cost',label:'Total cost',width:120,align:'right',render:r=><strong>{fmt(r.total_cost)}</strong>},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete material record ${r.id}?`)){try{await api.del('/materials/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={filtered} empty="No materials logged"
       />
@@ -367,6 +375,7 @@ export function Materials() {
 
 // ── Engineers Page ─────────────────────────────────────────────────────────
 export function Engineers() {
+  const { isSA } = useAuth();
   const [engineers, loading, reload] = useFetch('/engineers');
   const [projects] = useFetch('/projects');
   const [projFilter, setProjFilter] = useState('');
@@ -404,6 +413,7 @@ export function Engineers() {
           {key:'date_assigned',label:'Assigned',width:95},{key:'date_completed',label:'Completed',width:95,render:r=>r.date_completed||<span style={{color:'#0F6E56'}}>Active</span>},
           {key:'notes',label:'Notes',wrap:true},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete engineer ${r.name} from project?`)){try{await api.del('/engineers/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={filtered} empty="No engineers assigned"
       />
@@ -552,6 +562,7 @@ export function Users() {
           {key:'status',label:'Status',width:90,render:r=><StatusBadge status={r.status}/>},
           {key:'last_login',label:'Last login',width:140,render:r=>r.last_login?new Date(r.last_login).toLocaleString():'Never'},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
+          {key:'del',label:'',width:40,render:r=><Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete user ${r.name}? This cannot be undone.`)){try{await api.del('/users/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
         rows={users} empty="No users"
       />
@@ -631,6 +642,42 @@ export function Settings() {
       <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
         <div><div style={{fontSize:13,fontWeight:500}}>{user?.name}</div><div style={{fontSize:11,color:'var(--color-text-secondary)'}}>{user?.email} · {user?.role}</div></div>
         <Btn variant="danger" onClick={async()=>{await logout();window.location.href='/login';}}><i className="ti ti-logout" aria-hidden="true"/>Sign out</Btn>
+      </div>
+    </Card>
+  </>;
+}
+
+// ── Change Password Page ───────────────────────────────────────────────────
+export function ChangePassword() {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const sf = v => setForm(f=>({...f,...v}));
+
+  const save = async () => {
+    setMsg(''); setErr('');
+    if (form.newPassword !== form.confirmPassword) return setErr('Passwords do not match');
+    if (form.newPassword.length < 8) return setErr('Password must be at least 8 characters');
+    setLoading(true);
+    try {
+      await api.put('/auth/change-password', { currentPassword: form.currentPassword, newPassword: form.newPassword });
+      setMsg('Password changed successfully!');
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch(e) { setErr(e.message); }
+    finally { setLoading(false); }
+  };
+
+  return <>
+    <div style={{ marginBottom:16 }}><div style={{ fontSize:16,fontWeight:500 }}>Change Password</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Update your account password</div></div>
+    <Card style={{ maxWidth:480 }}>
+      <div style={{ padding:16 }}>
+        {msg && <Alert type="success"><i className="ti ti-check" aria-hidden="true"/>{msg}</Alert>}
+        {err && <Alert type="danger"><i className="ti ti-alert-circle" aria-hidden="true"/>{err}</Alert>}
+        <FormRow label="Current password"><Input type="password" value={form.currentPassword} onChange={v=>sf({currentPassword:v})} placeholder="Enter current password"/></FormRow>
+        <FormRow label="New password"><Input type="password" value={form.newPassword} onChange={v=>sf({newPassword:v})} placeholder="At least 8 characters"/></FormRow>
+        <FormRow label="Confirm new password"><Input type="password" value={form.confirmPassword} onChange={v=>sf({confirmPassword:v})} placeholder="Repeat new password"/></FormRow>
+        <Btn variant="primary" onClick={save} disabled={loading}><i className="ti ti-lock" aria-hidden="true"/>{loading?'Saving…':'Change Password'}</Btn>
       </div>
     </Card>
   </>;
