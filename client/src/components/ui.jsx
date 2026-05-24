@@ -95,6 +95,29 @@ export function Input({ value, onChange, type='text', placeholder='', readOnly=f
     style={{ width:'100%',padding:'7px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:readOnly?'var(--color-background-secondary)':'var(--color-background-primary)',color:readOnly?'var(--color-text-secondary)':'var(--color-text-primary)',...style }} />;
 }
 
+export function PasswordInput({ value, onChange, placeholder='' }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div style={{ position:'relative' }}>
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        style={{ width:'100%',padding:'7px 32px 7px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' }}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(v => !v)}
+        aria-label={show ? 'Hide password' : 'Show password'}
+        style={{ position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#0F3D26',padding:2,display:'flex',alignItems:'center' }}
+      >
+        <i className={`ti ti-eye${show ? '-off' : ''}`} style={{ fontSize:15 }} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
 export function Select({ value, onChange, children, style={} }) {
   return <select value={value} onChange={e=>onChange(e.target.value)}
     style={{ width:'100%',padding:'7px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)',...style }}>{children}</select>;

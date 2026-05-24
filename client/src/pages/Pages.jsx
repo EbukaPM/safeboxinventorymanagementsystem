@@ -5,7 +5,7 @@ export { default as Login } from './Login';
 // Inventory
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Card, Btn, Modal, FormRow, Input, Select, Grid2, DataTable, Badge, StatusBadge, Alert, fmt, fmtN, Progress } from '../components/ui';
+import { Card, Btn, Modal, FormRow, Input, PasswordInput, Select, Grid2, DataTable, Badge, StatusBadge, Alert, fmt, fmtN, Progress } from '../components/ui';
 import api from '../utils/api';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -616,7 +616,7 @@ export function Users() {
       <FormRow label="Email address"><Input type="email" value={addForm.email} onChange={v=>setAddForm(f=>({...f,email:v}))} placeholder="user@safebox.ng"/></FormRow>
       <Grid2>
         <FormRow label="Role"><Select value={addForm.role} onChange={v=>setAddForm(f=>({...f,role:v}))}><option>Admin</option><option>Super Admin</option></Select></FormRow>
-        <FormRow label="Initial password"><Input type="password" value={addForm.password} onChange={v=>setAddForm(f=>({...f,password:v}))} placeholder="Min. 6 characters"/></FormRow>
+        <FormRow label="Initial password"><PasswordInput value={addForm.password} onChange={v=>setAddForm(f=>({...f,password:v}))} placeholder="Min. 6 characters"/></FormRow>
       </Grid2>
     </Modal>
     <Modal open={editModal} title="Edit user" onClose={()=>setEditModal(false)} onSave={saveEdit}>
@@ -832,9 +832,9 @@ export function ChangePassword() {
       <div style={{ padding:16 }}>
         {msg && <Alert type="success"><i className="ti ti-check" aria-hidden="true"/>{msg}</Alert>}
         {err && <Alert type="danger"><i className="ti ti-alert-circle" aria-hidden="true"/>{err}</Alert>}
-        <FormRow label="Current password"><Input type="password" value={form.currentPassword} onChange={v=>sf({currentPassword:v})} placeholder="Enter current password"/></FormRow>
-        <FormRow label="New password"><Input type="password" value={form.newPassword} onChange={v=>sf({newPassword:v})} placeholder="At least 8 characters"/></FormRow>
-        <FormRow label="Confirm new password"><Input type="password" value={form.confirmPassword} onChange={v=>sf({confirmPassword:v})} placeholder="Repeat new password"/></FormRow>
+        <FormRow label="Current password"><PasswordInput value={form.currentPassword} onChange={v=>sf({currentPassword:v})} placeholder="Enter current password"/></FormRow>
+        <FormRow label="New password"><PasswordInput value={form.newPassword} onChange={v=>sf({newPassword:v})} placeholder="At least 8 characters"/></FormRow>
+        <FormRow label="Confirm new password"><PasswordInput value={form.confirmPassword} onChange={v=>sf({confirmPassword:v})} placeholder="Repeat new password"/></FormRow>
         <Btn variant="primary" onClick={save} disabled={loading}><i className="ti ti-lock" aria-hidden="true"/>{loading?'Saving…':'Change Password'}</Btn>
       </div>
     </Card>
