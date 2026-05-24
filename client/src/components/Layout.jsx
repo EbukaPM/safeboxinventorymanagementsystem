@@ -120,6 +120,7 @@ export default function Layout({ children }) {
           <NavItem to="/projects" icon="building-factory" label="Projects" />
           <NavItem to="/materials" icon="tool" label="Project materials" />
           <NavItem to="/engineers" icon="hardhat" label="Engineers" />
+          <NavItem to="/battery-collections" icon="battery-charging" label="Battery collections" />
 
           {isSA() && <>
             <NavSection label="Administration" />

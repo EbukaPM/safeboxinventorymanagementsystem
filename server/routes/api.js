@@ -82,12 +82,12 @@ router.get('/projects', auth, (req, res) => {
 });
 
 router.post('/projects', auth, (req, res) => {
-  const { name, client, project_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
+  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Project name required' });
   const id = nextId('PRJ', 'projects');
-  db.prepare(`INSERT INTO projects (id,name,client,project_type,start_date,end_date,status,manager,system_size_kwp,notes,created_by,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`)
-    .run(id, name, client||'', project_type||'Commercial', start_date||'', end_date||'', status||'Planning', manager||'', system_size_kwp||0, notes||'', req.user.id);
+  db.prepare(`INSERT INTO projects (id,name,client,project_type,sale_type,start_date,end_date,status,manager,system_size_kwp,notes,created_by,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`)
+    .run(id, name, client||'', project_type||'Commercial', sale_type||'Outright Purchase', start_date||'', end_date||'', status||'Planning', manager||'', system_size_kwp||0, notes||'', req.user.id);
   audit(req.user.id, req.user.name, 'Project created', 'project', id, `${id} – ${name}`, req.ip);
   res.status(201).json({ id });
 });
@@ -95,9 +95,9 @@ router.post('/projects', auth, (req, res) => {
 router.put('/projects/:id', auth, (req, res) => {
   const p = db.prepare('SELECT * FROM projects WHERE id=?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Not found' });
-  const { name, client, project_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
-  db.prepare('UPDATE projects SET name=?,client=?,project_type=?,start_date=?,end_date=?,status=?,manager=?,system_size_kwp=?,notes=? WHERE id=?')
-    .run(name??p.name, client??p.client, project_type??p.project_type, start_date??p.start_date, end_date??p.end_date, status??p.status, manager??p.manager, system_size_kwp??p.system_size_kwp, notes??p.notes, p.id);
+  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
+  db.prepare('UPDATE projects SET name=?,client=?,project_type=?,sale_type=?,start_date=?,end_date=?,status=?,manager=?,system_size_kwp=?,notes=? WHERE id=?')
+    .run(name??p.name, client??p.client, project_type??p.project_type, sale_type??p.sale_type, start_date??p.start_date, end_date??p.end_date, status??p.status, manager??p.manager, system_size_kwp??p.system_size_kwp, notes??p.notes, p.id);
   audit(req.user.id, req.user.name, 'Project updated', 'project', p.id, `${p.id} – ${name||p.name}`, req.ip);
   res.json({ success: true });
 });
@@ -298,6 +298,31 @@ router.delete('/products/:id', auth, superAdmin, (req, res) => {
   if (!db.prepare('SELECT id FROM products WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
   db.prepare('DELETE FROM products WHERE id=?').run(req.params.id);
   audit(req.user.id, req.user.name, 'Product deleted', 'product', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+// ── Battery Collections ───────────────────────────────────────────────────
+router.get('/battery-collections', auth, (req, res) => {
+  res.json(db.prepare(`SELECT bc.*, u.name as logged_by_name
+    FROM battery_collections bc LEFT JOIN users u ON bc.logged_by=u.id
+    ORDER BY bc.date DESC, bc.created_at DESC`).all());
+});
+
+router.post('/battery-collections', auth, (req, res) => {
+  const { date, battery_type, quantity, collected_from, notes } = req.body;
+  if (!battery_type || !quantity || !collected_from) return res.status(400).json({ error: 'Battery type, quantity and collected from are required' });
+  const id = nextId('BAT', 'battery_collections');
+  db.prepare(`INSERT INTO battery_collections (id,date,battery_type,quantity,collected_from,notes,logged_by,created_at)
+    VALUES (?,?,?,?,?,?,?,datetime('now'))`)
+    .run(id, date||new Date().toISOString().slice(0,10), battery_type, parseInt(quantity)||1, collected_from, notes||'', req.user.id);
+  audit(req.user.id, req.user.name, 'Battery collection logged', 'battery_collection', id, `${id} – ${quantity}x ${battery_type} from ${collected_from}`, req.ip);
+  res.status(201).json({ id });
+});
+
+router.delete('/battery-collections/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM battery_collections WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM battery_collections WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Battery collection deleted', 'battery_collection', req.params.id, `Deleted ${req.params.id}`, req.ip);
   res.json({ success: true });
 });
 

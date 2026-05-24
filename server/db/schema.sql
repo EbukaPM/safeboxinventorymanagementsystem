@@ -119,6 +119,17 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS battery_collections (
+  id TEXT PRIMARY KEY,
+  date TEXT NOT NULL,
+  battery_type TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  collected_from TEXT NOT NULL,
+  notes TEXT,
+  logged_by TEXT REFERENCES users(id),
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS audit_log (
   id TEXT PRIMARY KEY,
   timestamp TEXT DEFAULT (datetime('now')),
