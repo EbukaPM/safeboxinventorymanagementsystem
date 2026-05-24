@@ -262,7 +262,7 @@ export function Projects() {
   const [sortBy, setSortBy] = useState('date_desc');
   const sf = v => setForm(f=>({...f,...v}));
 
-  const openAdd = () => { setForm({name:'',client:'',project_type:'Commercial',start_date:today(),end_date:'',status:'Planning',manager:'',system_size_kwp:0,notes:''}); setEditing(null); setModal(true); };
+  const openAdd = () => { setForm({name:'',client:'',project_type:'Commercial',sale_type:'Outright Purchase',start_date:today(),end_date:'',status:'Planning',manager:'',system_size_kwp:0,notes:''}); setEditing(null); setModal(true); };
   const openEdit = p => { setForm({...p}); setEditing(p.id); setModal(true); };
   const save = async () => {
     try { editing ? await api.put(`/projects/${editing}`, form) : await api.post('/projects', form); setModal(false); reload(); }
@@ -308,7 +308,8 @@ export function Projects() {
       <DataTable
         cols={[
           {key:'id',label:'ID',width:80},{key:'name',label:'Project',wrap:true,render:r=><div><div style={{fontWeight:500}}>{r.name}</div><div style={{fontSize:10,color:'var(--color-text-secondary)'}}>{r.client}</div></div>},
-          {key:'project_type',label:'Type',width:110,render:r=><Badge color="gray">{r.project_type}</Badge>},
+          {key:'sale_type',label:'Model',width:140,render:r=><Badge color={r.sale_type==='Energy as a Service'?'purple':'blue'}>{r.sale_type||'Outright Purchase'}</Badge>},
+          {key:'project_type',label:'Sector',width:100,render:r=><Badge color="gray">{r.project_type}</Badge>},
           {key:'status',label:'Status',width:100,render:r=><StatusBadge status={r.status}/>},
           {key:'start_date',label:'Start',width:90},{key:'end_date',label:'End',width:90,render:r=>r.end_date||<span style={{color:'var(--color-text-tertiary)'}}>Ongoing</span>},
           {key:'manager',label:'Manager',width:110},{key:'engineer_count',label:'Engineers',width:75,align:'center'},
@@ -322,8 +323,9 @@ export function Projects() {
     <Modal open={modal} title={editing?'Edit project':'New project'} onClose={()=>setModal(false)} onSave={save}>
       <Grid2>
         <FormRow label="Status"><Select value={form.status||'Planning'} onChange={v=>sf({status:v})}><option>Planning</option><option>Active</option><option>Completed</option><option>On Hold</option><option>Cancelled</option></Select></FormRow>
-        <FormRow label="Project type"><Select value={form.project_type||''} onChange={v=>sf({project_type:v})}><option>Residential</option><option>Commercial</option><option>Industrial</option><option>Agricultural</option><option>Telecom</option><option>Street Lighting</option><option>Other</option></Select></FormRow>
+        <FormRow label="Business model"><Select value={form.sale_type||'Outright Purchase'} onChange={v=>sf({sale_type:v})}><option>Outright Purchase</option><option>Energy as a Service</option></Select></FormRow>
       </Grid2>
+      <FormRow label="Sector / project type"><Select value={form.project_type||''} onChange={v=>sf({project_type:v})}><option>Residential</option><option>Commercial</option><option>Industrial</option><option>Agricultural</option><option>Telecom</option><option>Street Lighting</option><option>Other</option></Select></FormRow>
       <FormRow label="Project name"><Input value={form.name||''} onChange={v=>sf({name:v})} placeholder="e.g. Lekki Residence Solar"/></FormRow>
       <Grid2>
         <FormRow label="Client / location"><Input value={form.client||''} onChange={v=>sf({client:v})}/></FormRow>
@@ -688,6 +690,118 @@ export function Settings() {
         <Btn variant="danger" onClick={async()=>{await logout();window.location.href='/login';}}><i className="ti ti-logout" aria-hidden="true"/>Sign out</Btn>
       </div>
     </Card>
+  </>;
+}
+
+// ── Battery Collections Page ──────────────────────────────────────────────
+export function BatteryCollections() {
+  const { isSA } = useAuth();
+  const [collections, loading, reload] = useFetch('/battery-collections');
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({});
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc');
+  const sf = v => setForm(f=>({...f,...v}));
+
+  const BATTERY_TYPES = ['Tubular','Lithium (LiFePO4)','AGM','Gel','Lead Acid','Other'];
+
+  const openAdd = () => { setForm({date:today(),battery_type:'Tubular',quantity:1,collected_from:'',notes:''}); setModal(true); };
+  const save = async () => {
+    try { await api.post('/battery-collections', form); setModal(false); reload(); }
+    catch(e){ alert(e.message); }
+  };
+
+  const filtered = collections
+    .filter(c => !typeFilter || c.battery_type === typeFilter)
+    .filter(c => !dateFrom || c.date >= dateFrom)
+    .filter(c => !dateTo || c.date <= dateTo)
+    .sort((a,b) => {
+      if (sortBy === 'date_desc') return (b.date||'').localeCompare(a.date||'');
+      if (sortBy === 'date_asc') return (a.date||'').localeCompare(b.date||'');
+      if (sortBy === 'qty_desc') return b.quantity - a.quantity;
+      if (sortBy === 'type') return (a.battery_type||'').localeCompare(b.battery_type||'');
+      return 0;
+    });
+
+  const totalBatteries = filtered.reduce((s,c)=>s+Number(c.quantity||0),0);
+  const byType = BATTERY_TYPES.map(t=>({ type:t, count:filtered.filter(c=>c.battery_type===t).length, qty:filtered.filter(c=>c.battery_type===t).reduce((s,c)=>s+Number(c.quantity),0) })).filter(x=>x.count>0);
+
+  const selStyle = { padding:'5px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' };
+
+  return <>
+    <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
+      <div><div style={{ fontSize:16,fontWeight:500 }}>Battery Collections</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Track tubular battery swap & upgrade programme</div></div>
+      <Btn variant="primary" onClick={openAdd}><i className="ti ti-plus" aria-hidden="true"/>Log collection</Btn>
+    </div>
+
+    {/* Summary cards */}
+    <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))',gap:10,marginBottom:16 }}>
+      <div style={{ background:'var(--color-background-secondary)',borderRadius:'var(--border-radius-md)',padding:'12px 14px' }}>
+        <div style={{ fontSize:10,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3 }}>Total records</div>
+        <div style={{ fontSize:24,fontWeight:500,color:'var(--color-text-primary)' }}>{filtered.length}</div>
+        <div style={{ fontSize:10,color:'var(--color-text-secondary)',marginTop:2 }}>{dateFrom||dateTo?'in filtered range':'all time'}</div>
+      </div>
+      <div style={{ background:'var(--color-background-secondary)',borderRadius:'var(--border-radius-md)',padding:'12px 14px' }}>
+        <div style={{ fontSize:10,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3 }}>Total batteries</div>
+        <div style={{ fontSize:24,fontWeight:500,color:'#0F3D26' }}>{fmtN(totalBatteries)}</div>
+        <div style={{ fontSize:10,color:'var(--color-text-secondary)',marginTop:2 }}>units collected</div>
+      </div>
+      {byType.map(x=>(
+        <div key={x.type} style={{ background:'var(--color-background-secondary)',borderRadius:'var(--border-radius-md)',padding:'12px 14px' }}>
+          <div style={{ fontSize:10,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3 }}>{x.type}</div>
+          <div style={{ fontSize:24,fontWeight:500,color:'var(--color-text-primary)' }}>{fmtN(x.qty)}</div>
+          <div style={{ fontSize:10,color:'var(--color-text-secondary)',marginTop:2 }}>{x.count} collection{x.count!==1?'s':''}</div>
+        </div>
+      ))}
+    </div>
+
+    {/* Filters */}
+    <div style={{ display:'flex',gap:8,marginBottom:12,flexWrap:'wrap',alignItems:'center' }}>
+      <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)} style={selStyle}>
+        <option value="">All battery types</option>
+        {BATTERY_TYPES.map(t=><option key={t}>{t}</option>)}
+      </select>
+      <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} title="Date from" style={selStyle} />
+      <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} title="Date to" style={selStyle} />
+      <select value={sortBy} onChange={e=>setSortBy(e.target.value)} style={selStyle}>
+        <option value="date_desc">Newest first</option>
+        <option value="date_asc">Oldest first</option>
+        <option value="qty_desc">Highest quantity</option>
+        <option value="type">Sort by type</option>
+      </select>
+      {(typeFilter||dateFrom||dateTo) && <Btn size="sm" onClick={()=>{setTypeFilter('');setDateFrom('');setDateTo('');}}><i className="ti ti-x" aria-hidden="true"/>Clear</Btn>}
+      <span style={{ fontSize:11,color:'var(--color-text-secondary)',marginLeft:4 }}>{filtered.length} record{filtered.length!==1?'s':''} · {fmtN(totalBatteries)} batteries</span>
+    </div>
+
+    <Card>
+      <DataTable
+        cols={[
+          {key:'id',label:'ID',width:85},
+          {key:'date',label:'Date',width:95},
+          {key:'battery_type',label:'Battery type',width:150,render:r=><Badge color="teal">{r.battery_type}</Badge>},
+          {key:'quantity',label:'Quantity',width:80,align:'right',render:r=><strong>{fmtN(r.quantity)}</strong>},
+          {key:'collected_from',label:'Collected from',wrap:true},
+          {key:'notes',label:'Notes',wrap:true},
+          {key:'logged_by_name',label:'Logged by',width:110},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete collection ${r.id}?`)){try{await api.del('/battery-collections/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
+        ]}
+        rows={filtered} empty="No battery collections recorded"
+      />
+    </Card>
+
+    <Modal open={modal} title="Log battery collection" onClose={()=>setModal(false)} onSave={save} saveLabel="Log collection">
+      <Grid2>
+        <FormRow label="Date"><Input type="date" value={form.date||''} onChange={v=>sf({date:v})}/></FormRow>
+        <FormRow label="Quantity (batteries)"><Input type="number" value={form.quantity||''} onChange={v=>sf({quantity:v})} placeholder="e.g. 3"/></FormRow>
+      </Grid2>
+      <FormRow label="Battery type"><Select value={form.battery_type||'Tubular'} onChange={v=>sf({battery_type:v})}>
+        {BATTERY_TYPES.map(t=><option key={t}>{t}</option>)}
+      </Select></FormRow>
+      <FormRow label="Collected from (customer name)"><Input value={form.collected_from||''} onChange={v=>sf({collected_from:v})} placeholder="e.g. Chidi Okafor"/></FormRow>
+      <FormRow label="Notes (optional)"><Input value={form.notes||''} onChange={v=>sf({notes:v})} placeholder="e.g. Battery condition, upgrade details…"/></FormRow>
+    </Modal>
   </>;
 }
 
