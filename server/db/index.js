@@ -3,7 +3,10 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = process.env.DB_PATH || './server/db/safebox.db';
+// In production use /data/safebox.db — mount a Railway Volume at /data to persist across deploys.
+// Override at any time with the DB_PATH environment variable.
+const DB_PATH = process.env.DB_PATH ||
+  (process.env.NODE_ENV === 'production' ? '/data/safebox.db' : './server/db/safebox.db');
 const dbDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 

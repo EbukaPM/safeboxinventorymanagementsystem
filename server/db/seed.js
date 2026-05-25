@@ -5,7 +5,8 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = process.env.DB_PATH || './server/db/safebox.db';
+const DB_PATH = process.env.DB_PATH ||
+  (process.env.NODE_ENV === 'production' ? '/data/safebox.db' : './server/db/safebox.db');
 const dbDir = path.dirname(DB_PATH);
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 
