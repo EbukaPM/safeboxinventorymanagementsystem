@@ -104,15 +104,15 @@ export function PasswordInput({ value, onChange, placeholder='' }) {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        style={{ width:'100%',padding:'7px 32px 7px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' }}
+        style={{ width:'100%',padding:'7px 34px 7px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' }}
       />
       <button
         type="button"
         onClick={() => setShow(v => !v)}
         aria-label={show ? 'Hide password' : 'Show password'}
-        style={{ position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',cursor:'pointer',color:'#0F3D26',padding:2,display:'flex',alignItems:'center' }}
+        style={{ position:'absolute',right:4,top:'50%',transform:'translateY(-50%)',background:'#0F3D26',border:'none',borderRadius:4,cursor:'pointer',color:'#ffffff',width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}
       >
-        <i className={`ti ti-eye${show ? '-off' : ''}`} style={{ fontSize:15 }} aria-hidden="true" />
+        <i className={`ti ti-eye${show ? '-off' : ''}`} style={{ fontSize:14,lineHeight:1 }} aria-hidden="true" />
       </button>
     </div>
   );
