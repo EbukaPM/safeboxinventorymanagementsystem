@@ -104,7 +104,7 @@ export function Movements() {
   const sf = v => setForm(f=>({...f,...v}));
   const approved = products.filter(p=>p.status==='Approved');
 
-  const openAdd = () => { setForm({date:today(),product_id:approved[0]?.id||'',movement_type:'Purchase (IN)',quantity:1,source:''}); setModal(true); };
+  const openAdd = () => { setForm({date:today(),product_id:approved[0]?.id||'',movement_type:'Purchase (IN)',quantity:1,condition:'New',source:''}); setModal(true); };
   const save = async () => {
     try { await api.post('/movements', form); setModal(false); reload(); }
     catch (e) { alert(e.message); }
@@ -131,7 +131,8 @@ export function Movements() {
         cols={[
           {key:'id',label:'ID',width:80},{key:'date',label:'Date',width:95},
           {key:'product_id',label:'Prod ID',width:80},{key:'product_name',label:'Product',wrap:true},
-          {key:'movement_type',label:'Type',width:180,render:r=><Badge color={IN_T.includes(r.movement_type)?'teal':'red'}>{r.movement_type}</Badge>},
+          {key:'movement_type',label:'Type',width:160,render:r=><Badge color={IN_T.includes(r.movement_type)?'teal':'red'}>{r.movement_type}</Badge>},
+          {key:'condition',label:'Condition',width:95,render:r=>{ const c={New:'green',Repaired:'teal',Returned:'amber',Refurbished:'blue',Faulty:'red'}; return <Badge color={c[r.condition||'New']||'gray'}>{r.condition||'New'}</Badge>; }},
           {key:'quantity',label:'Qty',width:70,align:'right',render:r=><strong style={{color:IN_T.includes(r.movement_type)?'#0F6E56':'#A32D2D'}}>{IN_T.includes(r.movement_type)?'+':'-'}{fmtN(r.quantity)}</strong>},
           {key:'total',label:'Value',width:110,align:'right',render:r=>fmt(r.quantity*r.unit_cost)},
           {key:'status',label:'Approval',width:100,render:r=><StatusBadge status={r.status}/>},
@@ -148,6 +149,7 @@ export function Movements() {
           {['Purchase (IN)','Return (IN)','Transfer IN','Client Return to Stock','Project Return to Stock','Used in Project (OUT)','Sale (OUT)','Transfer OUT','Damaged/Written Off','Adjustment'].map(t=><option key={t}>{t}</option>)}
         </Select></FormRow>
       </Grid2>
+      <FormRow label="Stock condition"><Select value={form.condition||'New'} onChange={v=>sf({condition:v})}><option>New</option><option>Repaired</option><option>Returned</option><option>Refurbished</option><option>Faulty</option></Select></FormRow>
       <FormRow label="Product ID"><Select value={form.product_id||''} onChange={v=>sf({product_id:v})}>
         {approved.map(p=><option key={p.id} value={p.id}>{p.id} – {p.brand} {p.model}</option>)}
       </Select></FormRow>
@@ -262,7 +264,7 @@ export function Projects() {
   const [sortBy, setSortBy] = useState('date_desc');
   const sf = v => setForm(f=>({...f,...v}));
 
-  const openAdd = () => { setForm({name:'',client:'',project_type:'Commercial',sale_type:'Outright Purchase',start_date:today(),end_date:'',status:'Planning',manager:'',system_size_kwp:0,notes:''}); setEditing(null); setModal(true); };
+  const openAdd = () => { setForm({name:'',client:'',project_type:'Commercial',sale_type:'Outright Purchase',start_date:today(),end_date:'',status:'Planning',manager:'',system_size_kva:0,notes:''}); setEditing(null); setModal(true); };
   const openEdit = p => { setForm({...p}); setEditing(p.id); setModal(true); };
   const save = async () => {
     try { editing ? await api.put(`/projects/${editing}`, form) : await api.post('/projects', form); setModal(false); reload(); }
@@ -308,12 +310,13 @@ export function Projects() {
       <DataTable
         cols={[
           {key:'id',label:'ID',width:80},{key:'name',label:'Project',wrap:true,render:r=><div><div style={{fontWeight:500}}>{r.name}</div><div style={{fontSize:10,color:'var(--color-text-secondary)'}}>{r.client}</div></div>},
-          {key:'sale_type',label:'Model',width:140,render:r=><Badge color={r.sale_type==='Energy as a Service'?'purple':'blue'}>{r.sale_type||'Outright Purchase'}</Badge>},
+          {key:'sale_type',label:'Model',width:150,render:r=>{ const c={EaaS:'purple','Energy as a Service':'purple','Repair Service':'amber','Maintenance Service':'teal','Upgrade Service':'green'}; return <Badge color={c[r.sale_type]||'blue'}>{r.sale_type||'Outright Purchase'}</Badge>; }},
           {key:'project_type',label:'Sector',width:100,render:r=><Badge color="gray">{r.project_type}</Badge>},
           {key:'status',label:'Status',width:100,render:r=><StatusBadge status={r.status}/>},
           {key:'start_date',label:'Start',width:90},{key:'end_date',label:'End',width:90,render:r=>r.end_date||<span style={{color:'var(--color-text-tertiary)'}}>Ongoing</span>},
           {key:'manager',label:'Manager',width:110},{key:'engineer_count',label:'Engineers',width:75,align:'center'},
-          {key:'materials_cost',label:'Materials cost',width:120,align:'right',render:r=>fmt(r.materials_cost)},
+          {key:'system_size_kva',label:'KVA',width:70,align:'right',render:r=>r.system_size_kva||'—'},
+          {key:'total_cost',label:'Total cost',width:130,align:'right',render:r=><span title={`Materials: ${fmt(r.materials_cost)}  Other: ${fmt(r.other_costs)}`}><strong>{fmt(r.total_cost)}</strong></span>},
           {key:'edit',label:'',width:40,render:r=><Btn size="sm" onClick={()=>openEdit(r)}><i className="ti ti-edit" aria-hidden="true"/></Btn>},
           {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete project ${r.name}?`)){try{await api.del('/projects/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
         ]}
@@ -323,7 +326,7 @@ export function Projects() {
     <Modal open={modal} title={editing?'Edit project':'New project'} onClose={()=>setModal(false)} onSave={save}>
       <Grid2>
         <FormRow label="Status"><Select value={form.status||'Planning'} onChange={v=>sf({status:v})}><option>Planning</option><option>Active</option><option>Completed</option><option>On Hold</option><option>Cancelled</option></Select></FormRow>
-        <FormRow label="Business model"><Select value={form.sale_type||'Outright Purchase'} onChange={v=>sf({sale_type:v})}><option>Outright Purchase</option><option>Energy as a Service</option></Select></FormRow>
+        <FormRow label="Business model"><Select value={form.sale_type||'Outright Purchase'} onChange={v=>sf({sale_type:v})}><option>Outright Purchase</option><option>Energy as a Service</option><option>Repair Service</option><option>Maintenance Service</option><option>Upgrade Service</option></Select></FormRow>
       </Grid2>
       <FormRow label="Sector / project type"><Select value={form.project_type||''} onChange={v=>sf({project_type:v})}><option>Residential</option><option>Commercial</option><option>Industrial</option><option>Agricultural</option><option>Telecom</option><option>Street Lighting</option><option>Other</option></Select></FormRow>
       <FormRow label="Project name"><Input value={form.name||''} onChange={v=>sf({name:v})} placeholder="e.g. Lekki Residence Solar"/></FormRow>
@@ -336,7 +339,7 @@ export function Projects() {
         <FormRow label="End date"><Input type="date" value={form.end_date||''} onChange={v=>sf({end_date:v})}/></FormRow>
       </Grid2>
       <Grid2>
-        <FormRow label="System size (kWp)"><Input type="number" value={form.system_size_kwp||''} onChange={v=>sf({system_size_kwp:v})}/></FormRow>
+        <FormRow label="System size (KVA)"><Input type="number" value={form.system_size_kva||''} onChange={v=>sf({system_size_kva:v})}/></FormRow>
         <FormRow label="Notes"><Input value={form.notes||''} onChange={v=>sf({notes:v})}/></FormRow>
       </Grid2>
     </Modal>
@@ -690,6 +693,65 @@ export function Settings() {
         <Btn variant="danger" onClick={async()=>{await logout();window.location.href='/login';}}><i className="ti ti-logout" aria-hidden="true"/>Sign out</Btn>
       </div>
     </Card>
+  </>;
+}
+
+// ── Project Costs Page ────────────────────────────────────────────────────
+export function ProjectCosts() {
+  const { isSA } = useAuth();
+  const [costs, loading, reload] = useFetch('/project-costs');
+  const [projects] = useFetch('/projects');
+  const [projFilter, setProjFilter] = useState('');
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({});
+  const sf = v => setForm(f=>({...f,...v}));
+
+  const openAdd = () => { setForm({project_id:projects[0]?.id||'',item_name:'',cost:'',notes:''}); setModal(true); };
+  const save = async () => {
+    try { await api.post('/project-costs', form); setModal(false); reload(); }
+    catch(e){ alert(e.message); }
+  };
+
+  const filtered = costs.filter(c=>!projFilter||c.project_id===projFilter);
+  const totalFiltered = filtered.reduce((s,c)=>s+Number(c.cost||0), 0);
+  const selProj = projects.find(p=>p.id===form.project_id)||{};
+
+  return <>
+    <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:16 }}>
+      <div><div style={{ fontSize:16,fontWeight:500 }}>Other project costs</div><div style={{ fontSize:11,color:'var(--color-text-secondary)',marginTop:2 }}>Labour, transport, rentals and any extra costs per project</div></div>
+      <Btn variant="primary" onClick={openAdd}><i className="ti ti-plus" aria-hidden="true"/>Add cost</Btn>
+    </div>
+    <div style={{ display:'flex',gap:8,marginBottom:12,alignItems:'center' }}>
+      <select value={projFilter} onChange={e=>setProjFilter(e.target.value)} style={{ padding:'5px 9px',border:'0.5px solid var(--color-border-secondary)',borderRadius:'var(--border-radius-md)',fontSize:12,background:'var(--color-background-primary)',color:'var(--color-text-primary)' }}>
+        <option value="">All projects</option>
+        {projects.map(p=><option key={p.id} value={p.id}>{p.id} – {p.name}</option>)}
+      </select>
+      {projFilter && <span style={{ fontSize:11,color:'var(--color-text-secondary)' }}>Total: <strong>{fmt(totalFiltered)}</strong></span>}
+    </div>
+    <Card>
+      <DataTable
+        cols={[
+          {key:'id',label:'ID',width:80},
+          {key:'project_id',label:'Proj',width:75},
+          {key:'project_name',label:'Project',wrap:true},
+          {key:'item_name',label:'Item / description',wrap:true},
+          {key:'cost',label:'Cost (₦)',width:130,align:'right',render:r=><strong>{fmt(r.cost)}</strong>},
+          {key:'notes',label:'Notes',wrap:true},
+          {key:'logged_by_name',label:'Logged by',width:110},
+          {key:'del',label:'',width:40,render:r=>isSA()&&<Btn size="sm" variant="danger" onClick={async()=>{ if(window.confirm(`Delete cost item ${r.item_name}?`)){try{await api.del('/project-costs/'+r.id);reload();}catch(e){alert(e.message);}}}}><i className="ti ti-trash" aria-hidden="true"/></Btn>},
+        ]}
+        rows={filtered} empty="No additional costs logged"
+      />
+    </Card>
+    <Modal open={modal} title="Add other project cost" onClose={()=>setModal(false)} onSave={save} saveLabel="Add cost">
+      <FormRow label="Project"><Select value={form.project_id||''} onChange={v=>sf({project_id:v})}>{projects.map(p=><option key={p.id} value={p.id}>{p.id} – {p.name}</option>)}</Select></FormRow>
+      <FormRow label="Project name"><Input value={selProj.name||''} readOnly/></FormRow>
+      <Grid2>
+        <FormRow label="Item / description"><Input value={form.item_name||''} onChange={v=>sf({item_name:v})} placeholder="e.g. Labour, Transport, Scaffolding"/></FormRow>
+        <FormRow label="Cost (₦)"><Input type="number" value={form.cost||''} onChange={v=>sf({cost:v})} placeholder="0.00"/></FormRow>
+      </Grid2>
+      <FormRow label="Notes (optional)"><Input value={form.notes||''} onChange={v=>sf({notes:v})}/></FormRow>
+    </Modal>
   </>;
 }
 

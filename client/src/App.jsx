@@ -6,7 +6,7 @@ import Dashboard from './pages/Dashboard';
 import {
   Inventory, Movements, Returns, Projects, Materials, Engineers,
   Approvals, Categories, Users, Audit, Settings, ChangePassword,
-  BatteryCollections
+  BatteryCollections, ProjectCosts
 } from './pages/Pages';
 
 function PrivateRoute({ children, requireSA=false }) {
@@ -41,6 +41,7 @@ function App() {
           <Route path="/categories" element={<PrivateRoute requireSA><Categories /></PrivateRoute>} />
           <Route path="/users" element={<PrivateRoute requireSA><Users /></PrivateRoute>} />
           <Route path="/audit" element={<PrivateRoute requireSA><Audit /></PrivateRoute>} />
+          <Route path="/project-costs" element={<PrivateRoute><ProjectCosts /></PrivateRoute>} />
           <Route path="/battery-collections" element={<PrivateRoute><BatteryCollections /></PrivateRoute>} />
           <Route path="/settings" element={<PrivateRoute><Settings /></PrivateRoute>} />
           <Route path="/change-password" element={<PrivateRoute><ChangePassword /></PrivateRoute>} />
