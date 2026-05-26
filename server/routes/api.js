@@ -18,16 +18,16 @@ router.get('/movements', auth, (req, res) => {
 });
 
 router.post('/movements', auth, (req, res) => {
-  const { date, product_id, movement_type, quantity, source, notes } = req.body;
+  const { date, product_id, movement_type, quantity, condition, source, notes } = req.body;
   if (!product_id || !quantity || !movement_type) return res.status(400).json({ error: 'Product, type and quantity required' });
   const id = nextId('MV', 'stock_movements');
   const status = req.user.role === 'Super Admin' ? 'Approved' : 'Pending';
   const approved_by = req.user.role === 'Super Admin' ? req.user.id : null;
   const approved_at = req.user.role === 'Super Admin' ? new Date().toISOString() : null;
-  db.prepare(`INSERT INTO stock_movements (id,date,product_id,movement_type,quantity,source,recorded_by,status,approved_by,approved_at,notes,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`)
-    .run(id, date||new Date().toISOString().slice(0,10), product_id, movement_type, quantity, source||'', req.user.id, status, approved_by, approved_at, notes||'');
-  audit(req.user.id, req.user.name, 'Movement logged', 'movement', id, `${id} – ${movement_type} ${quantity}x ${product_id} [${status}]`, req.ip);
+  db.prepare(`INSERT INTO stock_movements (id,date,product_id,movement_type,quantity,condition,source,recorded_by,status,approved_by,approved_at,notes,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`)
+    .run(id, date||new Date().toISOString().slice(0,10), product_id, movement_type, quantity, condition||'New', source||'', req.user.id, status, approved_by, approved_at, notes||'');
+  audit(req.user.id, req.user.name, 'Movement logged', 'movement', id, `${id} – ${movement_type} ${quantity}x ${product_id} [${condition||'New'}] [${status}]`, req.ip);
   res.status(201).json({ id, status });
 });
 
@@ -75,19 +75,22 @@ router.get('/projects', auth, (req, res) => {
   projs.forEach(p => {
     p.engineer_count = db.prepare('SELECT COUNT(*) as c FROM project_engineers WHERE project_id=?').get(p.id)?.c || 0;
     p.engineer_names = db.prepare('SELECT name FROM project_engineers WHERE project_id=?').all(p.id).map(e=>e.name).join(', ');
-    const cost = db.prepare(`SELECT COALESCE(SUM(pm.quantity * pr.unit_cost),0) as c FROM project_materials pm JOIN products pr ON pm.product_id=pr.id WHERE pm.project_id=?`).get(p.id);
-    p.materials_cost = cost?.c || 0;
+    const matCost = db.prepare(`SELECT COALESCE(SUM(pm.quantity * pr.unit_cost),0) as c FROM project_materials pm JOIN products pr ON pm.product_id=pr.id WHERE pm.project_id=?`).get(p.id);
+    p.materials_cost = matCost?.c || 0;
+    const otherCost = db.prepare(`SELECT COALESCE(SUM(cost),0) as c FROM project_costs WHERE project_id=?`).get(p.id);
+    p.other_costs = otherCost?.c || 0;
+    p.total_cost = p.materials_cost + p.other_costs;
   });
   res.json(projs);
 });
 
 router.post('/projects', auth, (req, res) => {
-  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
+  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kva, notes } = req.body;
   if (!name) return res.status(400).json({ error: 'Project name required' });
   const id = nextId('PRJ', 'projects');
-  db.prepare(`INSERT INTO projects (id,name,client,project_type,sale_type,start_date,end_date,status,manager,system_size_kwp,notes,created_by,created_at)
+  db.prepare(`INSERT INTO projects (id,name,client,project_type,sale_type,start_date,end_date,status,manager,system_size_kva,notes,created_by,created_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'))`)
-    .run(id, name, client||'', project_type||'Commercial', sale_type||'Outright Purchase', start_date||'', end_date||'', status||'Planning', manager||'', system_size_kwp||0, notes||'', req.user.id);
+    .run(id, name, client||'', project_type||'Commercial', sale_type||'Outright Purchase', start_date||'', end_date||'', status||'Planning', manager||'', system_size_kva||0, notes||'', req.user.id);
   audit(req.user.id, req.user.name, 'Project created', 'project', id, `${id} – ${name}`, req.ip);
   res.status(201).json({ id });
 });
@@ -95,9 +98,9 @@ router.post('/projects', auth, (req, res) => {
 router.put('/projects/:id', auth, (req, res) => {
   const p = db.prepare('SELECT * FROM projects WHERE id=?').get(req.params.id);
   if (!p) return res.status(404).json({ error: 'Not found' });
-  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kwp, notes } = req.body;
-  db.prepare('UPDATE projects SET name=?,client=?,project_type=?,sale_type=?,start_date=?,end_date=?,status=?,manager=?,system_size_kwp=?,notes=? WHERE id=?')
-    .run(name??p.name, client??p.client, project_type??p.project_type, sale_type??p.sale_type, start_date??p.start_date, end_date??p.end_date, status??p.status, manager??p.manager, system_size_kwp??p.system_size_kwp, notes??p.notes, p.id);
+  const { name, client, project_type, sale_type, start_date, end_date, status, manager, system_size_kva, notes } = req.body;
+  db.prepare('UPDATE projects SET name=?,client=?,project_type=?,sale_type=?,start_date=?,end_date=?,status=?,manager=?,system_size_kva=?,notes=? WHERE id=?')
+    .run(name??p.name, client??p.client, project_type??p.project_type, sale_type??p.sale_type, start_date??p.start_date, end_date??p.end_date, status??p.status, manager??p.manager, system_size_kva??p.system_size_kva, notes??p.notes, p.id);
   audit(req.user.id, req.user.name, 'Project updated', 'project', p.id, `${p.id} – ${name||p.name}`, req.ip);
   res.json({ success: true });
 });
@@ -266,6 +269,7 @@ router.delete('/projects/:id', auth, superAdmin, (req, res) => {
   if (!db.prepare('SELECT id FROM projects WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
   db.prepare('DELETE FROM project_materials WHERE project_id=?').run(req.params.id);
   db.prepare('DELETE FROM project_engineers WHERE project_id=?').run(req.params.id);
+  db.prepare('DELETE FROM project_costs WHERE project_id=?').run(req.params.id);
   db.prepare('DELETE FROM projects WHERE id=?').run(req.params.id);
   audit(req.user.id, req.user.name, 'Project deleted', 'project', req.params.id, `Deleted ${req.params.id}`, req.ip);
   res.json({ success: true });
@@ -298,6 +302,30 @@ router.delete('/products/:id', auth, superAdmin, (req, res) => {
   if (!db.prepare('SELECT id FROM products WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
   db.prepare('DELETE FROM products WHERE id=?').run(req.params.id);
   audit(req.user.id, req.user.name, 'Product deleted', 'product', req.params.id, `Deleted ${req.params.id}`, req.ip);
+  res.json({ success: true });
+});
+
+// ── Project Costs ─────────────────────────────────────────────────────────
+router.get('/project-costs', auth, (req, res) => {
+  res.json(db.prepare(`SELECT pc.*, p.name as project_name, u.name as logged_by_name
+    FROM project_costs pc LEFT JOIN projects p ON pc.project_id=p.id LEFT JOIN users u ON pc.logged_by=u.id
+    ORDER BY pc.created_at DESC`).all());
+});
+
+router.post('/project-costs', auth, (req, res) => {
+  const { project_id, item_name, cost, notes } = req.body;
+  if (!project_id || !item_name || cost === undefined) return res.status(400).json({ error: 'Project, item name and cost are required' });
+  const id = nextId('PCO', 'project_costs');
+  db.prepare(`INSERT INTO project_costs (id,project_id,item_name,cost,notes,logged_by,created_at) VALUES (?,?,?,?,?,?,datetime('now'))`)
+    .run(id, project_id, item_name, parseFloat(cost)||0, notes||'', req.user.id);
+  audit(req.user.id, req.user.name, 'Project cost added', 'project_cost', id, `${id} – ${item_name} ₦${cost} → ${project_id}`, req.ip);
+  res.status(201).json({ id });
+});
+
+router.delete('/project-costs/:id', auth, superAdmin, (req, res) => {
+  if (!db.prepare('SELECT id FROM project_costs WHERE id=?').get(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  db.prepare('DELETE FROM project_costs WHERE id=?').run(req.params.id);
+  audit(req.user.id, req.user.name, 'Project cost deleted', 'project_cost', req.params.id, `Deleted ${req.params.id}`, req.ip);
   res.json({ success: true });
 });
 

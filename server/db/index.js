@@ -21,6 +21,8 @@ db.exec(schema);
 // Column migrations — ALTER TABLE is safe to attempt; the catch ignores "duplicate column" errors
 const migrations = [
   "ALTER TABLE projects ADD COLUMN sale_type TEXT NOT NULL DEFAULT 'Outright Purchase'",
+  "ALTER TABLE projects ADD COLUMN system_size_kva REAL DEFAULT 0",
+  "ALTER TABLE stock_movements ADD COLUMN condition TEXT NOT NULL DEFAULT 'New'",
 ];
 for (const sql of migrations) {
   try { db.prepare(sql).run(); } catch (_) { /* column already exists — skip */ }

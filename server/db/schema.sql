@@ -119,6 +119,16 @@ CREATE TABLE IF NOT EXISTS settings (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS project_costs (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL REFERENCES projects(id),
+  item_name TEXT NOT NULL,
+  cost REAL NOT NULL DEFAULT 0,
+  notes TEXT,
+  logged_by TEXT REFERENCES users(id),
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS battery_collections (
   id TEXT PRIMARY KEY,
   date TEXT NOT NULL,
