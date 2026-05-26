@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const fmt = (n) => isNaN(n) || n === null ? '—' : '₦' + Math.round(Number(n)).toLocaleString();
 export const fmtN = (n) => isNaN(n) || n === null ? '—' : Number(n).toLocaleString();
@@ -127,15 +127,55 @@ export function Grid2({ children }) {
   return <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:10 }}>{children}</div>;
 }
 
-export function DataTable({ cols, rows, empty='No data' }) {
+export function DataTable({ cols, rows, empty='No data', pageSize=20 }) {
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 whenever the dataset changes (e.g. after filtering)
+  useEffect(() => { setPage(1); }, [rows.length]);
+
   if (!rows.length) return <div style={{ textAlign:'center',padding:24,color:'var(--color-text-secondary)',fontSize:12 }}>{empty}</div>;
-  return <div style={{ overflowX:'auto' }}>
-    <table style={{ width:'100%',borderCollapse:'collapse',fontSize:12,tableLayout:'fixed' }}>
-      <thead>
-        <tr>{cols.map(c=><th key={c.key} style={{ background:'var(--color-background-secondary)',padding:'8px 12px',textAlign:c.align||'left',fontSize:10,fontWeight:500,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'.04em',borderBottom:'0.5px solid var(--color-border-tertiary)',width:c.width,whiteSpace:'nowrap' }}>{c.label}</th>)}</tr>
-      </thead>
-      <tbody>{rows.map((r,i)=><tr key={i} style={{ borderBottom:'0.5px solid var(--color-border-tertiary)' }} onMouseEnter={e=>e.currentTarget.style.background='var(--color-background-secondary)'} onMouseLeave={e=>e.currentTarget.style.background=''}>{cols.map(c=><td key={c.key} style={{ padding:'9px 12px',textAlign:c.align||'left',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:c.wrap?'normal':'nowrap' }}>{c.render?c.render(r):r[c.key]}</td>)}</tr>)}</tbody>
-    </table>
+
+  const totalPages = Math.ceil(rows.length / pageSize);
+  const start = (page - 1) * pageSize;
+  const pageRows = rows.slice(start, start + pageSize);
+
+  // Build the list of page tokens to render, inserting '…' where needed
+  const pageTokens = () => {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (page <= 4)        return [1, 2, 3, 4, 5, '…', totalPages];
+    if (page >= totalPages - 3) return [1, '…', totalPages-4, totalPages-3, totalPages-2, totalPages-1, totalPages];
+    return [1, '…', page - 1, page, page + 1, '…', totalPages];
+  };
+
+  const btnBase = { display:'inline-flex',alignItems:'center',justifyContent:'center',minWidth:28,height:28,borderRadius:'var(--border-radius-md)',border:'0.5px solid var(--color-border-secondary)',background:'var(--color-background-primary)',color:'var(--color-text-primary)',fontSize:12,cursor:'pointer',padding:'0 6px',fontWeight:400 };
+  const btnActive = { ...btnBase, background:'#0F3D26',color:'#fff',border:'none',fontWeight:600 };
+  const btnDisabled = { ...btnBase, opacity:.4,cursor:'not-allowed' };
+
+  return <div>
+    <div style={{ overflowX:'auto' }}>
+      <table style={{ width:'100%',borderCollapse:'collapse',fontSize:12,tableLayout:'fixed' }}>
+        <thead>
+          <tr>{cols.map(c=><th key={c.key} style={{ background:'var(--color-background-secondary)',padding:'8px 12px',textAlign:c.align||'left',fontSize:10,fontWeight:500,color:'var(--color-text-secondary)',textTransform:'uppercase',letterSpacing:'.04em',borderBottom:'0.5px solid var(--color-border-tertiary)',width:c.width,whiteSpace:'nowrap' }}>{c.label}</th>)}</tr>
+        </thead>
+        <tbody>{pageRows.map((r,i)=><tr key={i} style={{ borderBottom:'0.5px solid var(--color-border-tertiary)' }} onMouseEnter={e=>e.currentTarget.style.background='var(--color-background-secondary)'} onMouseLeave={e=>e.currentTarget.style.background=''}>{cols.map(c=><td key={c.key} style={{ padding:'9px 12px',textAlign:c.align||'left',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:c.wrap?'normal':'nowrap' }}>{c.render?c.render(r):r[c.key]}</td>)}</tr>)}</tbody>
+      </table>
+    </div>
+    {totalPages > 1 && (
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderTop:'0.5px solid var(--color-border-tertiary)',gap:8,flexWrap:'wrap' }}>
+        <span style={{ fontSize:11,color:'var(--color-text-secondary)' }}>
+          Showing {start + 1}–{Math.min(start + pageSize, rows.length)} of {rows.length}
+        </span>
+        <div style={{ display:'flex',gap:4,alignItems:'center' }}>
+          <button style={page===1?btnDisabled:btnBase} disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+          {pageTokens().map((t,i) =>
+            t === '…'
+              ? <span key={`e${i}`} style={{ fontSize:12,color:'var(--color-text-secondary)',padding:'0 2px' }}>…</span>
+              : <button key={t} style={t===page?btnActive:btnBase} onClick={()=>setPage(t)}>{t}</button>
+          )}
+          <button style={page===totalPages?btnDisabled:btnBase} disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
+        </div>
+      </div>
+    )}
   </div>;
 }
 
